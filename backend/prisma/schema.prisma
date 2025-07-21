@@ -1,0 +1,65 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl"]
+}
+
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  createdAt    DateTime @default(now())
+  email        String   @unique
+  passwordHash String
+  firstName    String
+  lastName     String
+  role         UserRole @default(USER)
+  orders       Order[]  @relation("UserOrders")
+}
+
+model Order {
+  id           String   @id @default(uuid())
+  createdAt    DateTime @default(now())
+  userId       String
+  user         User      @relation("UserOrders", fields: [userId], references: [id])
+  airlineCode  String
+  flightNumber String
+  flightDate   DateTime
+  pickupISO    DateTime
+  bags         Bag[]
+  status       OrderStatus @default(PENDING)
+  airlineMsgId String?
+}
+
+model Bag {
+  id        String   @id @default(uuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id])
+  tagNumber String   @unique
+  weightKg  Float
+  status    BagStatus @default(REGISTERED)
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum OrderStatus {
+  PENDING
+  COLLECTED
+  SECURE_ROOM
+  TSA_CLEAR
+  LOADED
+}
+
+enum BagStatus {
+  REGISTERED
+  PICKED_UP
+  SECURE_ROOM
+  TSA_CLEAR
+  LOADED
+}
